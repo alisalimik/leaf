@@ -17,8 +17,29 @@ if [ "$1" = "debug" ]; then
 	release_flag=
 fi
 
-export IPHONEOS_DEPLOYMENT_TARGET=10.0
-export MACOSX_DEPLOYMENT_TARGET=10.12
+export IPHONEOS_DEPLOYMENT_TARGET=13.0
+export MACOSX_DEPLOYMENT_TARGET=13
+# Ensure Xcode command line tools are set up properly
+sudo xcode-select --switch /Applications/Xcode.app/Contents/Developer
+
+# Check Xcode SDK paths
+export SDKROOT=$(xcrun --sdk macosx --show-sdk-path)
+
+# Ensure correct CMake version is installed
+brew install cmake
+export CMAKE=$(which cmake)
+
+# Ensure correct Rust target is installed
+rustup target add x86_64-apple-ios-macabi
+
+# Define environment variables to fix incorrect macabi targeting
+export CFLAGS="-arch x86_64 -target x86_64-apple-ios13.0-macabi -isysroot $SDKROOT"
+export CXXFLAGS="$CFLAGS"
+export LDFLAGS="-L$SDKROOT/usr/lib -F$SDKROOT/System/Library/Frameworks"
+
+# Ensure `aws-lc-sys` builds with the correct flags
+export AWS_LC_SYS_CFLAGS="$CFLAGS"
+export AWS_LC_SYS_CMAKE_BUILDER=1
 
 # Add Rust targets for Mac Catalyst only
 rustup target add x86_64-apple-ios-macabi
